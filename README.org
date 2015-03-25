@@ -1,0 +1,6 @@
+* pal
+a pal for active learning
+* Dependencies
+- numpy
+- scikit-learn
+- matplotlib
