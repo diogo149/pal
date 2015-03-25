@@ -1,5 +1,7 @@
 * pal
-a pal for active learning
+Pal for Active Learning
+
+pal is a tool for easily testing the effectiveness of active learning algoithms. See ~examples/~ for some usage.
 * Dependencies
 - numpy
 - scikit-learn
