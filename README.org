@@ -4,3 +4,6 @@ a pal for active learning
 - numpy
 - scikit-learn
 - matplotlib
+* TODOs
+- make sure all rng's are seeded
+- factor out some strategies into a common area
