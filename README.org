@@ -7,6 +7,8 @@ pal is a tool for easily testing the effectiveness of active learning algoithms.
 - scikit-learn
 - matplotlib
 - seaborn
+* Running
+Evaluate ~python examples/mnist.py~ (or I prefer ~ipython -i examples/mnist.py~) to download mnist data and generate a chart of the results (~foo.png~).
 * TODOs
 - make sure all rng's are seeded
 - factor out some strategies into a common area
