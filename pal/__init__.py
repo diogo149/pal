@@ -1,5 +1,7 @@
 from sklearn import cross_validation
 
+import strategy
+
 
 def simulate_sequential_binary(X,
                                y,
@@ -37,11 +39,7 @@ def simulate_sequential_binary(X,
     init_score = calc_score(train_idxs)
     scores = [init_score]
     while len(train_idxs) < num_final_samples:
-        next_idx = active_learning_fn(X_train,
-                                      train_idxs,
-                                      y_train[train_idxs],
-                                      predict_fn=predict_fn,
-                                      objective_fn=objective_fn)
+        next_idx = active_learning_fn(X_train, train_idxs, y_train[train_idxs])
         assert next_idx not in train_idxs
         train_idxs.append(next_idx)
         score = calc_score(train_idxs)
