@@ -4,6 +4,8 @@ Pal for Active Learning
 pal is a tool for easily testing the effectiveness of active learning algoithms. See ~examples/~ for some usage.
 
 [[./mnist.png]]
+
+This chart shows a bunch of naive strategies trying for finding the best point to label. The data in this case is determining whether an image in MNIST is a 1 or a 7. The model starts with only 10 points in total, and we show the results of labelling 90 more points.
 * Dependencies
 - numpy
 - scikit-learn
