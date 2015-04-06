@@ -12,4 +12,8 @@ This chart shows a bunch of naive strategies trying for finding the best point t
 - matplotlib (optional, for examples)
 - seaborn (optional,for examples)
 * Running
-Evaluate ~python examples/mnist.py~ (or I prefer ~ipython -i examples/mnist.py~) to download mnist data and generate a chart of the results (~mnist.png~).
+Evaluate one of:
+  1. ~python examples/mnist.py~
+  2. ~python -m examples.mnist~
+  3. ~ipython -i examples/mnist.py~ (my preference)
+to download mnist data and generate a chart of the results (~mnist.png~).
