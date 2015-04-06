@@ -108,4 +108,8 @@ if __name__ == "__main__":
         lines.append(line)
     pylab.legend(handles=lines)
     pylab.savefig("mnist.png")
+    try:
+        pylab.show()
+    except:
+        pass
     pylab.clf()
