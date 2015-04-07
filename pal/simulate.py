@@ -1,6 +1,23 @@
 from sklearn import cross_validation
 
 
+def train_test_split_indexes(y,
+                             test_size=0.1,
+                             train_size=None,
+                             stratified=False,
+                             random_state=None):
+    kwargs = dict(
+        train_size=train_size,
+        test_size=test_size,
+        random_state=random_state
+    )
+    if stratified:
+        splitter = cross_validation.StratifiedShuffleSplit(y, **kwargs)
+    else:
+        splitter = cross_validation.ShuffleSplit(len(y), **kwargs)
+    return next(iter(splitter))
+
+
 def sequential_binary(X,
                       y,
                       predict_fn,
@@ -23,23 +40,23 @@ def sequential_binary(X,
         random_state=seed
     )
 
-    def calc_score(train_idxs):
+    def calculate_test_score(train_idxs):
         X_tmp = X_train[train_idxs]
         y_tmp = y_train[train_idxs]
         preds = predict_fn(X_tmp, y_tmp, X_test)
         return objective_fn(y_test, preds)
 
-    sss = cross_validation.StratifiedShuffleSplit(
-        y_train,
-        test_size=num_initial_samples,
-        random_state=seed)
-    train_idxs = list(sss.__iter__().next()[1])
-    init_score = calc_score(train_idxs)
+    train_idxs = list(train_test_split_indexes(y_train,
+                                               test_size=num_initial_samples,
+                                               random_state=seed,
+                                               stratified=True)[1])
+    assert len(train_idxs) == num_initial_samples
+    init_score = calculate_test_score(train_idxs)
     scores = [init_score]
     while len(train_idxs) < num_final_samples:
         next_idx = active_learning_fn(X_train, train_idxs, y_train[train_idxs])
         assert next_idx not in train_idxs
         train_idxs.append(next_idx)
-        score = calc_score(train_idxs)
+        score = calculate_test_score(train_idxs)
         scores.append(score)
     return scores
