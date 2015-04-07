@@ -29,16 +29,12 @@ def accuracy_fn(y_true, preds):
 
 
 if __name__ == "__main__":
-    X_raw, y_raw = pal.data.load_raw_mnist()
-    mnist_class0 = 1
-    mnist_class1 = 7
     model = "lr"
     seed = 51
 
+    X, y = pal.data.binary_mnist(class0=1, class1=7)
+
     rng = np.random.RandomState(seed)
-    idxs = (y_raw == mnist_class0) | (y_raw == mnist_class1)
-    X = X_raw[idxs]
-    y = y_raw[idxs] == mnist_class1
     # bernoulli noise
     y = ((rng.rand(*y.shape) < 0.1) ^ y)
     y += 0.0
