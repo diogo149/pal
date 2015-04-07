@@ -103,7 +103,7 @@ class BootstrapPredictionMostVariance(ActiveLearningStrategy):
     WARNING: can be a bit slow
     """
 
-    def __init__(self, predict_fn, num_predictions=10):
+    def __init__(self, predict_fn, rng, num_predictions=10):
         """
         predict_fn: function that takes in X_train, y_train, X_test and
         returns predictions for y_test
@@ -111,6 +111,7 @@ class BootstrapPredictionMostVariance(ActiveLearningStrategy):
         num_predictions: number of predictions to take the variance over
         """
         self.predict_fn = predict_fn
+        self.rng = rng
         self.num_predictions = num_predictions
 
     def __call__(self, X_train, train_idxs, y):
@@ -118,7 +119,7 @@ class BootstrapPredictionMostVariance(ActiveLearningStrategy):
         all_preds = []
         for _ in range(self.num_predictions):
             # bootstrap sampling
-            idxs = np.random.randint(0, len(train_idxs), len(train_idxs))
+            idxs = self.rng.randint(0, len(train_idxs), len(train_idxs))
             # getting prediction
             preds = self.predict_fn(X_tmp[idxs], y[idxs], X_train)
             all_preds.append(preds)
