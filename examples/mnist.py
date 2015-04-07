@@ -29,7 +29,7 @@ def accuracy_fn(y_true, preds):
 
 
 if __name__ == "__main__":
-    X_raw, y_raw = pal.data.mnist()
+    X_raw, y_raw = pal.data.load_raw_mnist()
     mnist_class0 = 1
     mnist_class1 = 7
     model = "lr"

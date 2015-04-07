@@ -5,7 +5,7 @@ import os
 import numpy as np
 
 
-def mnist():
+def load_raw_mnist():
     url = 'http://deeplearning.net/data/mnist/mnist.pkl.gz'
     filename = 'mnist.pkl.gz'
 
