@@ -28,6 +28,9 @@ def sequential_binary(X,
                       test_size=0.33,
                       seed=42):
     """
+    predict_fn:
+    takes in training features, training observations, and test features and
+    returns predictions for each of the test features
 
     objective_fn:
     function to maximize
@@ -40,23 +43,25 @@ def sequential_binary(X,
         random_state=seed
     )
 
-    def calculate_test_score(train_idxs):
-        X_tmp = X_train[train_idxs]
-        y_tmp = y_train[train_idxs]
-        preds = predict_fn(X_tmp, y_tmp, X_test)
+    def calculate_test_score(labeled_idxs):
+        X_labeled = X_train[labeled_idxs]
+        y_labeled = y_train[labeled_idxs]
+        preds = predict_fn(X_labeled, y_labeled, X_test)
         return objective_fn(y_test, preds)
 
-    train_idxs = list(train_test_split_indexes(y_train,
-                                               test_size=num_initial_samples,
-                                               random_state=seed,
-                                               stratified=True)[1])
-    assert len(train_idxs) == num_initial_samples
-    init_score = calculate_test_score(train_idxs)
+    labeled_idxs = list(train_test_split_indexes(y_train,
+                                                 test_size=num_initial_samples,
+                                                 random_state=seed,
+                                                 stratified=True)[1])
+    assert len(labeled_idxs) == num_initial_samples
+    init_score = calculate_test_score(labeled_idxs)
     scores = [init_score]
-    while len(train_idxs) < num_final_samples:
-        next_idx = active_learning_fn(X_train, train_idxs, y_train[train_idxs])
-        assert next_idx not in train_idxs
-        train_idxs.append(next_idx)
-        score = calculate_test_score(train_idxs)
+    while len(labeled_idxs) < num_final_samples:
+        next_idx = active_learning_fn(X_train,
+                                      labeled_idxs,
+                                      y_train[labeled_idxs])
+        assert next_idx not in labeled_idxs
+        labeled_idxs.append(next_idx)
+        score = calculate_test_score(labeled_idxs)
         scores.append(score)
     return scores
