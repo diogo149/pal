@@ -29,9 +29,15 @@ def load_raw_mnist():
     return X, y
 
 
-def binary_mnist(class0, class1):
+def multiclass_mnist(classes):
     X, y = load_raw_mnist()
-    idxs = (y == class0) | (y == class1)
+    idxs = np.in1d(y, classes)
     X_new = X[idxs]
-    y_new = y[idxs] == class1
-    return X_new, y_new
+    y_new = y[idxs]
+    y_one_hot_encoded = np.array([y_new == c for c in classes]).T
+    return X_new, y_one_hot_encoded
+
+
+def binary_mnist(class0, class1):
+    X, y = multiclass_mnist([class0, class1])
+    return X, y[:, [1]]
