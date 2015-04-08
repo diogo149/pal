@@ -17,20 +17,36 @@ import pal
 
 
 def predict_model(clf, X_train, y_train, X_test):
-    clf.fit(X_train, y_train)
+    """
+    takes in a sklearn model and 3 matrices (2D arrays) corresponding to
+    training features, training targets, and testing features and returns
+    a matrix of predictions
+    """
     if hasattr(clf, "predict_proba"):
-        return clf.predict_proba(X_test)[:, 1]
+        # classification
+        assert y_train.shape[1] == 1
+        clf.fit(X_train, y_train[:, 0])
+        return clf.predict_proba(X_test)
     else:
         return clf.predict(X_test)
 
 
-def accuracy_fn(y_true, preds):
-    return sklearn.metrics.accuracy_score(y_true, preds >= 0.5)
+def accuracy(y_true, preds):
+    return sklearn.metrics.accuracy_score(
+        y_true,
+        np.argmax(preds, axis=1))
 
 
 if __name__ == "__main__":
     model = "lr"
     seed = 51
+    kwargs = dict(
+        num_initial_samples=10,
+        num_final_samples=100,
+        test_size=0.5,
+        stratified_sample=True,
+        objective_fn=accuracy,
+    )
 
     X, y = pal.data.binary_mnist(class0=1, class1=7)
 
@@ -59,68 +75,33 @@ if __name__ == "__main__":
     # X = np.random.randn(1000, 50)
     # y = np.random.randn(1000, 3)
     predict_fn = functools.partial(predict_model, clf)
-    kwargs = dict(
+    kwargs.update(dict(
         X=X,
         y=y,
-        num_initial_samples=10,
-        num_final_samples=100,
         predict_fn=predict_fn,
-        test_size=0.5,
         seed=seed,
-        # FIXME
-        objective_fn=accuracy_fn,
-        # objective_fn=sklearn.metrics.roc_auc_score,
-        # objective_fn=sklearn.metrics.mean_squared_error,
-        stratified_sample=True,
-    )
+    ))
 
     strategies = [
         ("random",
          pal.strategy.Random(rng)),
         ("pred_closest_to_0.5",
-         pal.strategy.PredictionClosestToValue(0.5, predict_fn)),
+         pal.strategy.PredictionClosestToValue(0.5,
+                                               predict_fn)),
         ("boostrap_most_variance",
-         pal.strategy.BootstrapPredictionMostVariance(predict_fn, rng)),
+         pal.strategy.BootstrapPredictionMostVariance(predict_fn,
+                                                      rng,
+                                                      num_samples=4)),
         ("pred_closest_to_0.5_once",
-         pal.strategy.PredictionClosestToValueComputedOnce(0.5, predict_fn)),
-    ]
-    strategies = [
-        ("2",
-         pal.strategy.BootstrapPredictionMostVariance(predict_fn,
-                                                      rng,
-                                                      num_predictions=2)),
-        ("3",
-         pal.strategy.BootstrapPredictionMostVariance(predict_fn,
-                                                      rng,
-                                                      num_predictions=3)),
-        ("4",
-         pal.strategy.BootstrapPredictionMostVariance(predict_fn,
-                                                      rng,
-                                                      num_predictions=4)),
+         pal.strategy.PredictionClosestToValueComputedOnce(0.5,
+                                                           predict_fn)),
     ]
     all_scores = []
     lines = []
-
-    def foo(X_train, y_train, X_test):
-        preds = predict_fn(X_train, y_train, X_test)
-        return -np.abs(preds - 0.5)
-
-    def foo2(X_train, y_train, X_test):
-        all_preds = []
-        for _ in range(3):
-            # bootstrap sampling
-            idxs = rng.randint(0, len(X_train), len(X_train))
-            # getting prediction
-            preds = predict_fn(X_train[idxs], y_train[idxs], X_test)
-            all_preds.append(preds)
-        all_preds = np.array(all_preds)
-        return all_preds.swapaxes(0, 1).reshape(len(X_test), -1).std(axis=1)
-
     for label, strategy in strategies:
         start_time = time.time()
         result = pal.simulate.simulate_sequential(
-            # active_learning_fn=strategy,
-            score_fn=foo2,  # FIXME
+            score_fn=strategy,
             **kwargs
         )
         scores = result["test_scores"]
@@ -128,8 +109,6 @@ if __name__ == "__main__":
         all_scores.append(scores)
         line, = pylab.plot(scores, label=label)
         lines.append(line)
-        # FIXME delete
-        break
     pylab.legend(handles=lines)
     pylab.savefig("mnist.png")
     try:
@@ -166,7 +145,8 @@ if __name__ == "__main__":
     #                                # 100ms per frame
     #                                interval=100,
     #                                repeat=True,
-    #                                # 1 second
+    #                                blit=True,
+    #                                # 1 second (doesn't seem to work)
     #                                repeat_delay=1000)
     # anim.save('mnist.gif', writer='imagemagick')
     # pylab.clf()
