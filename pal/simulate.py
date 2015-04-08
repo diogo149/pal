@@ -44,6 +44,8 @@ def simulate_sequential(X,
     function to maximize
     takes in y_true as 1st argument, predictions as 2nd argument
     """
+    assert len(X.shape) == len(y.shape) == 2
+    assert len(X) == len(y)
     X_train, X_test, y_train, y_test = cross_validation.train_test_split(
         X,
         y,
