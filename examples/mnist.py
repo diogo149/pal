@@ -18,14 +18,12 @@ import pal
 if __name__ == "__main__":
     model = "lr"
     seed = 51
-    kwargs = dict(
-        num_initial_samples=10,
-        num_final_samples=100,
-        samples_per_step=5,
-        test_size=0.5,
-        stratified_sample=True,
-        objective_fn=pal.ml_utils.accuracy_2d,
-    )
+    num_initial_samples = 10
+    num_final_samples = 100
+    samples_per_step = 5
+    test_size = 0.5
+    stratified_sample = True
+    objective_fn = pal.ml_utils.accuracy_2d
 
     # X, y = pal.data.binary_mnist(class0=1, class1=7)
     X, y = pal.data.multiclass_mnist(range(10))
@@ -59,6 +57,8 @@ if __name__ == "__main__":
         ("pred_closest_to_0.5",
          pal.strategy.PredictionClosestToValue(0.5,
                                                predict_fn)),
+        ("entropy",
+         pal.strategy.Entropy(predict_fn)),
         ("boostrap_most_variance",
          pal.strategy.BootstrapPredictionMostVariance(predict_fn,
                                                       rng,
@@ -68,21 +68,22 @@ if __name__ == "__main__":
                                                            predict_fn)),
     ]
 
-    kwargs.update(dict(
-        X=X,
-        y=y,
-        predict_fn=predict_fn,
-        seed=seed,
-    ))
     all_scores = []
     lines = []
     for label, strategy in strategies:
         start_time = time.time()
-        result = pal.simulate.simulate_sequential(
-            score_fn=strategy,
-            **kwargs
-        )
-        scores = result["test_scores"]
+        state = pal.analysis.initial_state(X, y, seed)
+        state = pal.analysis.train_test_split(state, test_size=test_size)
+        state = pal.analysis.simulate_indices(state,
+                                              strategy,
+                                              num_initial_samples,
+                                              num_final_samples,
+                                              samples_per_step,
+                                              stratified_sample=True)
+        state = pal.analysis.calculate_indices_objectives(state,
+                                                          predict_fn,
+                                                          objective_fn)
+        scores = state["objective_values"]
         print("%s took %f" % (label, time.time() - start_time))
         all_scores.append(scores)
         line, = pylab.plot(scores, label=label)

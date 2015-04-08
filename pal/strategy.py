@@ -4,6 +4,7 @@ and y as a matrix
 """
 
 import numpy as np
+import scipy.stats
 
 
 def aggregate_columns(vals, aggregator):
@@ -227,6 +228,23 @@ class NoBootstrapPredictionMostVariance(ScoreFunction):
         stds = std_fn(X_train, y_train, X_test)
         # take mean of std for each column
         return aggregate_columns(stds, self.aggregator)
+
+
+class Entropy(ScoreFunction):
+
+    """
+    score points based on their entropy
+
+    assumes classification task and score function returns probabilities
+    """
+
+    def __init__(self, predict_fn):
+        self.predict_fn = predict_fn
+
+    def __call__(self, X_train, y_train, X_test):
+        probs = self.predict_fn(X_train, y_train, X_test)
+        # need to transpose because entropy reduces along axis=0
+        return scipy.stats.entropy(probs.T)
 
 
 def PredictionClosestToValueComputedOnce(target_value,
