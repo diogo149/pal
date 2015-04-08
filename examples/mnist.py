@@ -4,7 +4,6 @@ import time
 import numpy as np
 import sklearn.linear_model
 import sklearn.ensemble
-import sklearn.metrics
 
 import pylab
 try:
@@ -16,12 +15,6 @@ except ImportError:
 import pal
 
 
-def accuracy(y_true, preds):
-    return sklearn.metrics.accuracy_score(
-        np.argmax(y_true, axis=1),
-        np.argmax(preds, axis=1))
-
-
 if __name__ == "__main__":
     model = "lr"
     seed = 51
@@ -31,7 +24,7 @@ if __name__ == "__main__":
         samples_per_step=5,
         test_size=0.5,
         stratified_sample=True,
-        objective_fn=accuracy,
+        objective_fn=pal.ml_utils.accuracy_2d,
     )
 
     # X, y = pal.data.binary_mnist(class0=1, class1=7)
@@ -59,7 +52,7 @@ if __name__ == "__main__":
     elif model == "ridge":
         clf = sklearn.linear_model.Ridge()
 
-    predict_fn = functools.partial(pal.utils.predict_model, clf)
+    predict_fn = functools.partial(pal.ml_utils.predict_model, clf)
     strategies = [
         ("random",
          pal.strategy.Random(rng)),

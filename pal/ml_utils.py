@@ -2,6 +2,7 @@ import copy
 
 import numpy as np
 from sklearn import cross_validation
+import sklearn.metrics
 
 
 def train_test_split_indexes(y,
@@ -40,3 +41,9 @@ def predict_model(clf, X_train, y_train, X_test):
         return all_preds
     else:
         return clf.predict(X_test)
+
+
+def accuracy_2d(y_true, preds):
+    return sklearn.metrics.accuracy_score(
+        np.argmax(y_true, axis=1),
+        np.argmax(preds, axis=1))

@@ -1,5 +1,5 @@
 import numpy as np
-from . import utils
+from . import ml_utils
 from sklearn import cross_validation
 
 
@@ -47,7 +47,7 @@ def simulate_sequential(X,
         return objective_fn(y_test, preds)
 
     labeled_idxs = list(
-        utils.train_test_split_indexes(
+        ml_utils.train_test_split_indexes(
             np.argmax(y_train, axis=1),
             test_size=num_initial_samples,
             random_state=seed,
