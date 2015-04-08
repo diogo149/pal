@@ -21,19 +21,27 @@ def plot_to(filename=None):
     pylab.clf()
 
 
+def plot_states(key, states, labels, title=None):
+    """
+    plot key value over number of data points for states
+    """
+    series = [pd.Series(state[key], index=state["num_labeled"])
+              for state in states]
+    df = pd.DataFrame.from_items([(label, s)
+                                  for label, s in zip(labels, series)])
+    df.plot(title=title)
+    pylab.xlabel("num labeled data points")
+    pylab.ylabel(key)
+    return df
+
+
 def plot_objective_values(states, labels, title=None):
     """
     plot objective values over time for multiple states
     """
     upper_bound = max([state.get("objective_upper_bound", -np.inf)
                        for state in states])
-    series = [pd.Series(state["objective_values"], index=state["num_labeled"])
-              for state in states]
-    df = pd.DataFrame.from_items([(label, s)
-                                  for label, s in zip(labels, series)])
-    df.plot(title=title)
-    pylab.xlabel("labeled data points")
-    pylab.ylabel("objective value")
+    df = plot_states("objective_values", states, labels, title)
     if not np.isinf(upper_bound):
         pylab.axhline(upper_bound)
     return df

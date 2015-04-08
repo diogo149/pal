@@ -75,6 +75,11 @@ if __name__ == "__main__":
                                                           predict_fn,
                                                           objective_fn)
         state = pal.analysis.labeled_and_unlabeled_scores(state)
+        state = pal.analysis.oracle_goodness_of_indices(state,
+                                                        predict_fn,
+                                                        objective_fn,
+                                                        rng,
+                                                        sampled_points=10)
         print("%s took %f" % (label, time.time() - start_time))
         states.append(state)
 
@@ -85,6 +90,8 @@ if __name__ == "__main__":
 
     with pal.viz.plot_to("mnist_multiclass_obj.png"):
         pal.viz.plot_objective_values(states, labels)
+    with pal.viz.plot_to("mnist_multiclass_oracle_goodness.png"):
+        pal.viz.plot_states("oracle_goodness", states, labels)
 
     for label, state in zip(labels, states):
         # show initial and final states

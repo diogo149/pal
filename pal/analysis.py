@@ -138,15 +138,79 @@ def labeled_and_unlabeled_scores(state):
 
     num_points = len(y_train)
     all_points = set(range(num_points))
+    unlabeled_idxs_history = [list(all_points - set(labeled_idxs))
+                              for labeled_idxs in labeled_idxs_history]
+
     labeled_scores = []
     unlabeled_scores = []
     assert len(labeled_idxs_history) - 1 == len(labeling_scores)
-    for labeled_idxs, score in zip(labeled_idxs_history[1:], labeling_scores):
-        unlabeled_idxs = list(all_points - set(labeled_idxs))
+    for labeled_idxs, unlabeled_idxs, score in zip(labeled_idxs_history[1:],
+                                                   unlabeled_idxs_history[1:],
+                                                   labeling_scores):
         labeled_scores.append(score[labeled_idxs])
         unlabeled_scores.append(score[unlabeled_idxs])
     return dict(
+        unlabeled_idxs_history=unlabeled_idxs_history,
         labeled_scores=labeled_scores,
         unlabeled_scores=unlabeled_scores,
+        **state
+    )
+
+
+def oracle_goodness_of_indices(state,
+                               predict_fn,
+                               objective_fn,
+                               rng,
+                               sampled_points=10):
+    """
+    computes an approximation of "true" goodness of indices, ie.
+    the percentile of the chosen points at increasing test accuracy
+
+    sampled_points:
+    how many points to sample to determine the percentile of the points we're
+    chosen
+    """
+    X_train = state["X_train"]
+    y_train = state["y_train"]
+    X_test = state["X_test"]
+    y_test = state["y_test"]
+    labeled_idxs_history = state["labeled_idxs_history"]
+    unlabeled_idxs_history = state["unlabeled_idxs_history"]
+    idx_labeling_order = state["idx_labeling_order"]
+
+    assert (len(idx_labeling_order)
+            == len(labeled_idxs_history)
+            == len(unlabeled_idxs_history))
+
+    # start with 0 so list has same length as other lists
+    oracle_goodness = [0.0]
+    for (chosen_idxs,
+         labeled_idxs,
+         unlabeled_idxs) in zip(idx_labeling_order[1:],
+                                labeled_idxs_history,
+                                unlabeled_idxs_history):
+        # note that the chosen_idxs are for the next time step, since
+        # labeled and unlabeled idxs exist for the initial step
+        for idx in chosen_idxs:
+            assert idx in unlabeled_idxs
+
+        def score_idx(idx):
+            idxs = labeled_idxs + [idx]
+            preds = predict_fn(X_train[idxs], y_train[idxs], X_test)
+            return objective_fn(y_test, preds)
+
+        sampled_idxs = rng.choice(np.arange(len(unlabeled_idxs)),
+                                  size=sampled_points,
+                                  replace=False)
+        reference_scores = np.array(
+            [score_idx(idx) for idx in sampled_idxs]
+        )
+        avg_goodness = np.mean(
+            [(score_idx(idx) > reference_scores).mean()
+             for idx in chosen_idxs]
+        )
+        oracle_goodness.append(avg_goodness)
+    return dict(
+        oracle_goodness=oracle_goodness,
         **state
     )
