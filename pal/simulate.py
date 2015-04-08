@@ -1,23 +1,6 @@
 import numpy as np
+from . import utils
 from sklearn import cross_validation
-
-
-def train_test_split_indexes(y,
-                             test_size=0.1,
-                             train_size=None,
-                             stratified=False,
-                             random_state=None):
-    # TODO move to utils?
-    kwargs = dict(
-        train_size=train_size,
-        test_size=test_size,
-        random_state=random_state
-    )
-    if stratified:
-        splitter = cross_validation.StratifiedShuffleSplit(y, **kwargs)
-    else:
-        splitter = cross_validation.ShuffleSplit(len(y), **kwargs)
-    return next(iter(splitter))
 
 
 def simulate_sequential(X,
@@ -27,6 +10,7 @@ def simulate_sequential(X,
                         objective_fn,
                         num_initial_samples,
                         num_final_samples,
+                        samples_per_step=1,
                         test_size=0.33,
                         seed=42,
                         stratified_sample=False):
@@ -43,6 +27,9 @@ def simulate_sequential(X,
     objective_fn:
     function to maximize
     takes in y_true as 1st argument, predictions as 2nd argument
+
+    samples_per_step:
+    how many points to label at each step of the algorithm
     """
     assert len(X.shape) == len(y.shape) == 2
     assert len(X) == len(y)
@@ -60,7 +47,7 @@ def simulate_sequential(X,
         return objective_fn(y_test, preds)
 
     labeled_idxs = list(
-        train_test_split_indexes(
+        utils.train_test_split_indexes(
             np.argmax(y_train, axis=1),
             test_size=num_initial_samples,
             random_state=seed,

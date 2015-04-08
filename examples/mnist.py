@@ -16,26 +16,6 @@ except ImportError:
 import pal
 
 
-def predict_model(clf, X_train, y_train, X_test):
-    # TODO move to utils
-    """
-    takes in a sklearn model and 3 matrices (2D arrays) corresponding to
-    training features, training targets, and testing features and returns
-    a matrix of predictions
-    """
-    if hasattr(clf, "predict_proba"):
-        # classification
-        num_points = X_test.shape[0]
-        num_classes = y_train.shape[1]
-        clf.fit(X_train, np.argmax(y_train, axis=1))
-        preds = clf.predict_proba(X_test)
-        all_preds = np.zeros((num_points, num_classes), dtype=preds.dtype)
-        all_preds[:, clf.classes_] = preds
-        return all_preds
-    else:
-        return clf.predict(X_test)
-
-
 def accuracy(y_true, preds):
     return sklearn.metrics.accuracy_score(
         np.argmax(y_true, axis=1),
@@ -48,6 +28,7 @@ if __name__ == "__main__":
     kwargs = dict(
         num_initial_samples=10,
         num_final_samples=100,
+        samples_per_step=5,
         test_size=0.5,
         stratified_sample=True,
         objective_fn=accuracy,
@@ -62,23 +43,23 @@ if __name__ == "__main__":
     y += 0.0
 
     if model == "lr":
-        clf = sklearn.linear_model.LogisticRegression(random_state=rng)
+        clf = sklearn.linear_model.LogisticRegression(random_state=seed)
     elif model == "sgd":
         # using SGD because NoBootstrapPredictionMostVariance only makes sense
         # with a stochastic model
         clf = sklearn.linear_model.SGDClassifier(shuffle=True,
                                                  n_iter=100,
-                                                 random_state=rng)
+                                                 random_state=seed)
     elif model == "extratrees":
-        clf = sklearn.ensemble.ExtraTreesClassifier(random_state=rng)
+        clf = sklearn.ensemble.ExtraTreesClassifier(random_state=seed)
     elif model == "rf":
-        clf = sklearn.ensemble.RandomForestClassifier(random_state=rng)
+        clf = sklearn.ensemble.RandomForestClassifier(random_state=seed)
     elif model == "gbm":
-        clf = sklearn.ensemble.GradientBoostingClassifier(random_state=rng)
+        clf = sklearn.ensemble.GradientBoostingClassifier(random_state=seed)
     elif model == "ridge":
         clf = sklearn.linear_model.Ridge()
 
-    predict_fn = functools.partial(predict_model, clf)
+    predict_fn = functools.partial(pal.utils.predict_model, clf)
     strategies = [
         ("random",
          pal.strategy.Random(rng)),
