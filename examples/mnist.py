@@ -17,6 +17,7 @@ import pal
 
 
 def predict_model(clf, X_train, y_train, X_test):
+    # TODO move to utils
     """
     takes in a sklearn model and 3 matrices (2D arrays) corresponding to
     training features, training targets, and testing features and returns
@@ -24,16 +25,20 @@ def predict_model(clf, X_train, y_train, X_test):
     """
     if hasattr(clf, "predict_proba"):
         # classification
-        assert y_train.shape[1] == 1
-        clf.fit(X_train, y_train[:, 0])
-        return clf.predict_proba(X_test)
+        num_points = X_test.shape[0]
+        num_classes = y_train.shape[1]
+        clf.fit(X_train, np.argmax(y_train, axis=1))
+        preds = clf.predict_proba(X_test)
+        all_preds = np.zeros((num_points, num_classes), dtype=preds.dtype)
+        all_preds[:, clf.classes_] = preds
+        return all_preds
     else:
         return clf.predict(X_test)
 
 
 def accuracy(y_true, preds):
     return sklearn.metrics.accuracy_score(
-        y_true,
+        np.argmax(y_true, axis=1),
         np.argmax(preds, axis=1))
 
 
@@ -48,7 +53,8 @@ if __name__ == "__main__":
         objective_fn=accuracy,
     )
 
-    X, y = pal.data.binary_mnist(class0=1, class1=7)
+    # X, y = pal.data.binary_mnist(class0=1, class1=7)
+    X, y = pal.data.multiclass_mnist(range(10))
 
     rng = np.random.RandomState(seed)
     # bernoulli noise
@@ -72,16 +78,7 @@ if __name__ == "__main__":
     elif model == "ridge":
         clf = sklearn.linear_model.Ridge()
 
-    # X = np.random.randn(1000, 50)
-    # y = np.random.randn(1000, 3)
     predict_fn = functools.partial(predict_model, clf)
-    kwargs.update(dict(
-        X=X,
-        y=y,
-        predict_fn=predict_fn,
-        seed=seed,
-    ))
-
     strategies = [
         ("random",
          pal.strategy.Random(rng)),
@@ -96,6 +93,13 @@ if __name__ == "__main__":
          pal.strategy.PredictionClosestToValueComputedOnce(0.5,
                                                            predict_fn)),
     ]
+
+    kwargs.update(dict(
+        X=X,
+        y=y,
+        predict_fn=predict_fn,
+        seed=seed,
+    ))
     all_scores = []
     lines = []
     for label, strategy in strategies:

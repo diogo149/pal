@@ -61,12 +61,13 @@ def simulate_sequential(X,
 
     labeled_idxs = list(
         train_test_split_indexes(
-            y_train,
+            np.argmax(y_train, axis=1),
             test_size=num_initial_samples,
             random_state=seed,
             stratified=stratified_sample
         )[1])
     assert len(labeled_idxs) == num_initial_samples
+
     init_score = calculate_test_score(labeled_idxs)
     test_scores = [init_score]
     learning_scores_labeled = []
@@ -85,11 +86,6 @@ def simulate_sequential(X,
         # use learning_scores to determine next index to label
         next_idx = np.where(is_unlabeled
                             & (learning_scores == np.max(ls_unlabeled)))[0][0]
-
-        # FIXME delete
-        # next_idx = active_learning_fn(X_train,
-        #                               labeled_idxs,
-        #                               y_train[labeled_idxs])
         assert next_idx not in labeled_idxs
         labeled_idxs.append(next_idx)
         test_score = calculate_test_score(labeled_idxs)
