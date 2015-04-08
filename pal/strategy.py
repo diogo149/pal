@@ -236,6 +236,9 @@ class Entropy(ScoreFunction):
     score points based on their entropy
 
     assumes classification task and score function returns probabilities
+
+    should be the same as prioritizing the probability that is closest to 0.5
+    for binary classification
     """
 
     def __init__(self, predict_fn):

@@ -17,12 +17,9 @@ if __name__ == "__main__":
     test_size = 0.5
     objective_fn = pal.ml_utils.accuracy_2d
 
-    X, y = pal.data.binary_mnist(class0=1, class1=7)
-    # X, y = pal.data.multiclass_mnist(range(10))
+    X, y = pal.data.multiclass_mnist(range(10))
 
     rng = np.random.RandomState(seed)
-    # bernoulli noise
-    y = ((rng.rand(*y.shape) < 0.1) ^ y)
     y += 0.0
 
     if model == "lr":
@@ -46,10 +43,9 @@ if __name__ == "__main__":
     strategies = [
         ("random",
          pal.strategy.Random(rng)),
-        # same as entropy for binary classification
-        # ("pred_closest_to_0.5",
-        #  pal.strategy.PredictionClosestToValue(0.5,
-        #                                        predict_fn)),
+        ("pred_closest_to_0.5",
+         pal.strategy.PredictionClosestToValue(0.5,
+                                               predict_fn)),
         ("entropy",
          pal.strategy.Entropy(predict_fn)),
         ("boostrap_most_variance",
@@ -87,13 +83,13 @@ if __name__ == "__main__":
                                                    predict_fn,
                                                    objective_fn)
 
-    with pal.viz.plot_to("mnist_obj.png"):
+    with pal.viz.plot_to("mnist_multiclass_obj.png"):
         pal.viz.plot_objective_values(states, labels)
 
     for label, state in zip(labels, states):
         # show initial and final states
-        with pal.viz.plot_to("mnist_distribution_%s.png" % label):
+        with pal.viz.plot_to("mnist_multiclass_distribution_%s.png" % label):
             pal.viz.plot_labeled_unlabeled_score_distibutions(state)
         # create a gif as well
         pal.viz.animate_labeled_unlabeled_score_distibutions(
-            state, "mnist_distribution_%s.gif" % label)
+            state, "mnist_multiclass_distribution_%s.gif" % label)

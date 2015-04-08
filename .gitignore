@@ -62,4 +62,5 @@ target/
 *_flymake.py
 
 # images
-# *.png
+*.png
+*.gif

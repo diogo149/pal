@@ -40,4 +40,4 @@ def multiclass_mnist(classes):
 
 def binary_mnist(class0, class1):
     X, y = multiclass_mnist([class0, class1])
-    return X, y[:, [1]]
+    return X, y

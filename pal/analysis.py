@@ -68,6 +68,7 @@ def simulate_indices(state,
     idx_labeling_order = [labeled_idxs]
     labeling_scores = []
     labeled_idxs_history = [labeled_idxs]
+    num_labeled = [num_initial_samples]
     while len(labeled_idxs) < num_final_samples:
         labeling_score = score_fn(X_train[labeled_idxs],
                                   y_train[labeled_idxs],
@@ -85,7 +86,9 @@ def simulate_indices(state,
         labeling_scores.append(labeling_score)
         idx_labeling_order.append(next_idxs)
         labeled_idxs_history.append(labeled_idxs)
+        num_labeled.append(len(labeled_idxs))
     return dict(
+        num_labeled=num_labeled,
         labeling_scores=labeling_scores,
         idx_labeling_order=idx_labeling_order,
         labeled_idxs_history=labeled_idxs_history,
@@ -125,4 +128,25 @@ def calculate_indices_objectives(state, predict_fn, objective_fn):
     return dict(
         objective_values=objs,
         ** state
+    )
+
+
+def labeled_and_unlabeled_scores(state):
+    y_train = state["y_train"]
+    labeled_idxs_history = state["labeled_idxs_history"]
+    labeling_scores = state["labeling_scores"]
+
+    num_points = len(y_train)
+    all_points = set(range(num_points))
+    labeled_scores = []
+    unlabeled_scores = []
+    assert len(labeled_idxs_history) - 1 == len(labeling_scores)
+    for labeled_idxs, score in zip(labeled_idxs_history[1:], labeling_scores):
+        unlabeled_idxs = list(all_points - set(labeled_idxs))
+        labeled_scores.append(score[labeled_idxs])
+        unlabeled_scores.append(score[unlabeled_idxs])
+    return dict(
+        labeled_scores=labeled_scores,
+        unlabeled_scores=unlabeled_scores,
+        **state
     )
