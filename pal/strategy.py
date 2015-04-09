@@ -150,7 +150,11 @@ class PredictionClosestToValue(ScoreFunction):
     scores observations based on how close their prediction is to a given value
     """
 
-    def __init__(self, target_value, predict_fn, aggregator="mean"):
+    def __init__(self,
+                 target_value,
+                 predict_fn,
+                 aggregator="mean",
+                 distance_fn="cityblock"):
         """
         target_value: value for best_idx's prediction to be close to
 
@@ -160,10 +164,17 @@ class PredictionClosestToValue(ScoreFunction):
         self.target_value = target_value
         self.predict_fn = predict_fn
         self.aggregator = aggregator
+        self.distance_fn = distance_fn
 
     def __call__(self, X_train, y_train, X_test):
         preds = self.predict_fn(X_train, y_train, X_test)
-        diff_from_target = -np.abs(preds - self.target_value)
+        if self.distance_fn == "cityblock":
+            distance_fn = lambda x, y: np.abs(x - y)
+        elif self.distance_fn == "euclidean":
+            distance_fn = lambda x, y: (x - y) ** 2
+        else:
+            distance_fn = self.distance_fn
+        diff_from_target = -distance_fn(preds, self.target_value)
         return aggregate_columns(diff_from_target, self.aggregator)
 
 
