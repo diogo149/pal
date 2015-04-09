@@ -256,18 +256,27 @@ def before_and_after_scores(state):
     labeled = collections.defaultdict(list)
     for scores, labeled_idxs in zip(labeling_scores,
                                     map(set, labeled_idxs_history)):
-        for idx in unlabeled_then_labeled:
-            score = scores[idx]
-            if idx in labeled_idxs:
-                labeled[idx].append(score)
-            else:
-                unlabeled[idx].append(score)
 
+        # calculate rank of each score
+        ranks = ml_utils.to_ranking(scores)
+        # normalize to have 1 = max rank
+        ranks /= ranks.max()
+
+        # divide rankings into labeled and unlabeled
+        for idx in unlabeled_then_labeled:
+            rank = ranks[idx]
+            if idx in labeled_idxs:
+                labeled[idx].append(rank)
+            else:
+                unlabeled[idx].append(rank)
+
+        # see relative ranks for rows that have been labeled
         diffs = []
         for idx in labeled.keys():
             assert labeled[idx]
             assert unlabeled[idx]
-            diffs.append(np.mean(labeled[idx]) - np.mean(unlabeled[idx]))
+            diff = np.mean(labeled[idx]) - np.mean(unlabeled[idx])
+            diffs.append(diff)
         mean_diff = np.mean(diffs) if diffs else 0
         assert not np.isnan(mean_diff)
 

@@ -93,9 +93,7 @@ if __name__ == "__main__":
         pal.viz.plot_objective_values(states, labels)
 
     with pal.viz.plot_to("mnist_multiclass_before_after.png"):
-        df = pal.viz.plot_states("mean_before_and_after_diffs", states, labels)
-        pylab.clf()
-        (-df).plot(logy=True)
+        pal.viz.plot_states("mean_before_and_after_diffs", states, labels)
 
     for label, state in zip(labels, states):
         # show initial and final states

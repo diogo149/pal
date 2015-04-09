@@ -48,9 +48,9 @@ if __name__ == "__main__":
         ("random",
          pal.strategy.Random(rng)),
         # same as entropy for binary classification
-        # ("pred_closest_to_0.5",
-        #  pal.strategy.PredictionClosestToValue(0.5,
-        #                                        predict_fn)),
+        ("pred_closest_to_0.5",
+         pal.strategy.PredictionClosestToValue(0.5,
+                                               predict_fn)),
         ("entropy",
          pal.strategy.Entropy(predict_fn)),
         ("boostrap_most_variance",
@@ -93,9 +93,7 @@ if __name__ == "__main__":
         pal.viz.plot_objective_values(states, labels)
 
     with pal.viz.plot_to("mnist_before_after.png"):
-        df = pal.viz.plot_states("mean_before_and_after_diffs", states, labels)
-        pylab.clf()
-        (-df).plot(logy=True)
+        pal.viz.plot_states("mean_before_and_after_diffs", states, labels)
 
     for label, state in zip(labels, states):
         # show initial and final states

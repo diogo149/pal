@@ -5,6 +5,15 @@ from sklearn import cross_validation
 import sklearn.metrics
 
 
+def to_ranking(arr):
+    """
+    http://stackoverflow.com/questions/5284646/rank-items-in-an-array-using-python-numpy
+    """
+    order = arr.argsort()
+    ranks = order.argsort()
+    return ranks
+
+
 def train_test_split_indexes(y,
                              test_size=0.1,
                              train_size=None,
