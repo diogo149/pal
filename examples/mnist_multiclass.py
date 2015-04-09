@@ -4,6 +4,7 @@ import time
 import numpy as np
 import sklearn.linear_model
 import sklearn.ensemble
+import pylab
 
 import pal
 
@@ -79,6 +80,7 @@ if __name__ == "__main__":
                                                           predict_fn,
                                                           objective_fn)
         state = pal.analysis.labeled_and_unlabeled_scores(state)
+        state = pal.analysis.before_and_after_scores(state)
         print("%s took %f" % (label, time.time() - start_time))
         states.append(state)
 
@@ -89,6 +91,11 @@ if __name__ == "__main__":
 
     with pal.viz.plot_to("mnist_multiclass_obj.png"):
         pal.viz.plot_objective_values(states, labels)
+
+    with pal.viz.plot_to("mnist_multiclass_before_after.png"):
+        df = pal.viz.plot_states("mean_before_and_after_diffs", states, labels)
+        pylab.clf()
+        (-df).plot(logy=True)
 
     for label, state in zip(labels, states):
         # show initial and final states

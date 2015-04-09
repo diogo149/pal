@@ -1,3 +1,5 @@
+import collections
+
 import numpy as np
 from sklearn import cross_validation
 
@@ -132,6 +134,10 @@ def calculate_indices_objectives(state, predict_fn, objective_fn):
 
 
 def labeled_and_unlabeled_scores(state):
+    """
+    calculates for each time step all of the scores for the labeled and
+    unlabeled points
+    """
     y_train = state["y_train"]
     labeled_idxs_history = state["labeled_idxs_history"]
     labeling_scores = state["labeling_scores"]
@@ -212,5 +218,64 @@ def oracle_goodness_of_indices(state,
         oracle_goodness.append(avg_goodness)
     return dict(
         oracle_goodness=oracle_goodness,
+        **state
+    )
+
+
+def before_and_after_scores(state):
+    """
+    for every observation that starts unlabeled but eventually is labeled,
+    computes the average
+
+    rationale: a potentially good litmus test for an algorithm is whether
+    or not the scores get lower once they are labeled (presumably, they
+    would be less good to label because they are already labeled)
+
+    analyzing by observation may be necessary because some observations may
+    just be hard
+    """
+    labeled_idxs_history = state["labeled_idxs_history"]
+    unlabeled_idxs_history = state["unlabeled_idxs_history"]
+    labeling_scores = state["labeling_scores"]
+    assert (len(labeling_scores) + 1
+            == len(labeled_idxs_history)
+            == len(unlabeled_idxs_history))
+
+    # intersection of points that have received scores when both unlabeled
+    # and labeled
+    unlabeled_then_labeled = list(
+        # observations with scores when labeled
+        set(labeled_idxs_history[-2])
+        # and observations with scores when unlabeled
+        & set(unlabeled_idxs_history[0]))
+
+    before_and_after_diffs = []
+    # add initial item to be aligned with other fields
+    mean_before_and_after_diffs = [0.0]
+    unlabeled = collections.defaultdict(list)
+    labeled = collections.defaultdict(list)
+    for scores, labeled_idxs in zip(labeling_scores,
+                                    map(set, labeled_idxs_history)):
+        for idx in unlabeled_then_labeled:
+            score = scores[idx]
+            if idx in labeled_idxs:
+                labeled[idx].append(score)
+            else:
+                unlabeled[idx].append(score)
+
+        diffs = []
+        for idx in labeled.keys():
+            assert labeled[idx]
+            assert unlabeled[idx]
+            diffs.append(np.mean(labeled[idx]) - np.mean(unlabeled[idx]))
+        mean_diff = np.mean(diffs) if diffs else 0
+        assert not np.isnan(mean_diff)
+
+        before_and_after_diffs.append(diffs)
+        mean_before_and_after_diffs.append(mean_diff)
+
+    return dict(
+        before_and_after_diffs=before_and_after_diffs,
+        mean_before_and_after_diffs=mean_before_and_after_diffs,
         **state
     )

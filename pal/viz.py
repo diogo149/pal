@@ -13,12 +13,16 @@ except ImportError:
 
 @contextlib.contextmanager
 def plot_to(filename=None):
-    yield
     if filename is None:
+        pylab.close()
+        yield
         pylab.show()
+        pylab.close()
     else:
+        pylab.clf()
+        yield
         pylab.savefig(filename)
-    pylab.clf()
+        pylab.clf()
 
 
 def plot_states(key, states, labels, title=None):
